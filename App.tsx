@@ -1,118 +1,68 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
+ * App.tsx — Root component.
+ * Initialises: theme, storage, feature flags, network sync.
+ * Wraps: SafeAreaProvider, ErrorBoundary, NavigationContainer, ToastContainer.
  */
+import React, { useEffect } from 'react';
+import { StatusBar, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { RootNavigator } from './src/navigation/RootNavigator';
+import { ToastContainer } from './src/components/shared/ToastContainer';
+import { ErrorBoundary } from './src/components/shared/ErrorBoundary';
+import { useNetworkSync } from './src/hooks/useNetworkSync';
+import { useConsultationStore } from './src/store/consultations/consultationStore';
+import { useShopStore } from './src/store/shop/shopStore';
+import { useAppStore } from './src/store/app/appStore';
+import { featureFlagsService } from './src/services/featureFlags';
+import { Logger } from './src/services/logger';
+import { useTheme } from './src/hooks/useTheme';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const TAG = 'App';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+function AppContent(): React.JSX.Element {
+  const theme = useTheme();
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  // Register network monitor + offline sync
+  useNetworkSync();
+
+  // Bootstrap all persistent state
+  useEffect(() => {
+    const bootstrap = async () => {
+      Logger.info(TAG, 'Bootstrapping app...');
+      await Promise.all([
+        useAppStore.getState().loadPersistedTheme(),
+        useConsultationStore.getState().loadFromStorage(),
+        useShopStore.getState().loadFromStorage(),
+      ]);
+      featureFlagsService.initialize();
+      Logger.info(TAG, 'Bootstrap complete');
+    };
+
+    bootstrap();
+  }, []);
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar
+        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.surface}
+      />
+      <RootNavigator />
+      <ToastContainer />
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+export default function App(): React.JSX.Element {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;
