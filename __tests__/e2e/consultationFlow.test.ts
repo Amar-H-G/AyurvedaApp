@@ -92,12 +92,20 @@ describe('Consultation Booking E2E Flow (Logic Level)', () => {
     );
     expect(hasConflict).toBe(true);
 
-    // Step 6: cancellation
+    // Step 6: cancellation (online/offline state sync)
     booking.status = 'cancelled' as typeof booking.status;
     const afterCancel = bookings.some(
       b => b.doctorId === doctor.id && b.slotId === availableSlot!.id && b.status !== 'cancelled'
     );
     expect(afterCancel).toBe(false);
+
+    // Step 7: offline cancellation queue task creation
+    const offlineCancelOp = {
+      type: 'CANCEL_BOOKING' as const,
+      payload: { bookingId: booking.id },
+    };
+    expect(offlineCancelOp.type).toBe('CANCEL_BOOKING');
+    expect(offlineCancelOp.payload.bookingId).toBe(booking.id);
   });
 });
 

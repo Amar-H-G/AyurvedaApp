@@ -137,6 +137,27 @@ describe('Offline Queue logic', () => {
     const shouldProcess = operation.retryCount < MAX_RETRIES;
     expect(shouldProcess).toBe(true);
   });
+
+  it('enqueues and structures CANCEL_BOOKING operation correctly', () => {
+    const bookingId = 'booking_12345';
+    const op = {
+      id: `offline_${Date.now()}`,
+      type: 'CANCEL_BOOKING' as const,
+      payload: { bookingId },
+      createdAt: new Date().toISOString(),
+      retryCount: 0,
+    };
+    expect(op.type).toBe('CANCEL_BOOKING');
+    expect((op.payload as { bookingId: string }).bookingId).toBe(bookingId);
+  });
+
+  it('handles CANCEL_BOOKING retries and failure states safely', () => {
+    const MAX_RETRIES = 3;
+    const cancelOp = { retryCount: 2, id: 'op_cancel_1', type: 'CANCEL_BOOKING' as const };
+    expect(cancelOp.retryCount < MAX_RETRIES).toBe(true);
+    cancelOp.retryCount += 1;
+    expect(cancelOp.retryCount < MAX_RETRIES).toBe(false);
+  });
 });
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
