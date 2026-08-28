@@ -19,6 +19,7 @@ import { UpcomingConsultationsScreen } from '../modules/consultations/screens/Up
 // Screens — Shop
 import { ShopHomeScreen } from '../modules/shop/screens/ShopHomeScreen';
 import { ProductListScreen } from '../modules/shop/screens/ProductListScreen';
+import { ProductDetailScreen } from '../modules/shop/screens/ProductDetailScreen';
 import { CartScreen } from '../modules/shop/screens/CartScreen';
 
 // Screens — Health Records
@@ -35,6 +36,7 @@ export type ShopStackParams = {
   ShopHome: undefined;
   ProductList: { initialCategory?: string; initialSearch?: string } | undefined;
   ProductDetail: { productId: string };
+  ProductDetails: { productId: string };
   Cart: undefined;
 };
 
@@ -65,6 +67,7 @@ const linking: LinkingOptions<any> = {
           ShopHome: 'shop',
           ProductList: 'shop/products',
           ProductDetail: 'shop/:productId',
+          ProductDetails: 'shop/details/:productId',
           Cart: 'cart',
         },
       },
@@ -156,6 +159,16 @@ function ShopNavigator() {
         name="ProductList"
         component={ProductListScreen}
         options={{ title: 'All Products' }}
+      />
+      <ShopStack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={{ title: 'Product Details' }}
+      />
+      <ShopStack.Screen
+        name="ProductDetails"
+        component={ProductDetailScreen}
+        options={{ title: 'Product Details' }}
       />
       <ShopStack.Screen
         name="Cart"
