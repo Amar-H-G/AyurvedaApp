@@ -26,7 +26,7 @@ function parseDateInfo(dateStr: string): DateInfo {
     const parsed = parseISO(dateStr);
     let dayName = format(parsed, 'EEE');
     if (isToday(parsed)) dayName = 'Today';
-    else if (isTomorrow(parsed)) dayName = 'Tomorrow';
+    else if (isTomorrow(parsed)) dayName = 'Tom';
 
     const dayNumber = format(parsed, 'dd');
     const monthName = format(parsed, 'MMM').toUpperCase();
@@ -64,6 +64,7 @@ function DateSelectorBase({ availableDates, selectedDate, onSelectDate }: Props)
           variant="caption"
           color={isSelected ? theme.colors.textOnPrimary + 'CC' : theme.colors.textTertiary}
           style={styles.dayName}
+          numberOfLines={1}
         >
           {info.dayName}
         </Typography>
@@ -80,6 +81,7 @@ function DateSelectorBase({ availableDates, selectedDate, onSelectDate }: Props)
           variant="caption"
           color={isSelected ? theme.colors.textOnPrimary + 'E6' : theme.colors.textSecondary}
           style={styles.monthName}
+          numberOfLines={1}
         >
           {info.monthName}
         </Typography>
@@ -107,13 +109,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   card: {
-    width: 68,
+    width: 72,
     height: 84,
     borderRadius: 16,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
+    paddingHorizontal: 4,
     marginRight: 2,
   },
   selectedCardShadow: {
@@ -128,6 +131,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
   dayNumber: {
     fontSize: 20,
@@ -138,6 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
+    textAlign: 'center',
   },
   activeDot: {
     width: 5,

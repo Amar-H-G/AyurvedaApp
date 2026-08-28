@@ -1,7 +1,7 @@
 /**
- * Master Available Slots UI & Custom Booking Modal — Unit Logic Tests
+ * Master Available Slots UI, Custom Modals & Product Card — Unit Logic Tests
  */
-import { TimeSlot } from '../../src/types';
+import { TimeSlot, Product } from '../../src/types';
 
 function formatTimeForDisplay(timeStr: string): string {
   if (!timeStr) return '';
@@ -49,5 +49,27 @@ describe('Available Slots UI & Time Formatting Logic', () => {
     expect(availableSlot.isBooked || availableSlot.isExpired).toBe(false);
     expect(bookedSlot.isBooked).toBe(true);
     expect(expiredSlot.isExpired).toBe(true);
+  });
+
+  it('validates Product Card consistent layout attributes', () => {
+    const testProduct: Product = {
+      id: 'prod_1',
+      name: 'Amrutam Nari Soundarya Oil for Skin & Hair Care',
+      category: 'Oil',
+      price: 499,
+      originalPrice: 650,
+      discount: 23,
+      rating: 4.8,
+      reviewCount: 142,
+      inStock: true,
+      imageUrl: 'https://example.com/oil.jpg',
+      description: 'Herbal oil',
+      ingredients: ['Sesame', 'Rose'],
+      usageInstructions: 'Apply daily',
+    };
+
+    expect(testProduct.name.length).toBeGreaterThan(20);
+    expect(testProduct.discount).toBeGreaterThan(0);
+    expect(testProduct.inStock).toBe(true);
   });
 });

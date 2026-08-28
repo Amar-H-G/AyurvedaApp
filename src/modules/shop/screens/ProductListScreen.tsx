@@ -192,7 +192,7 @@ function ProductListScreenBase({ navigation }: Props): React.JSX.Element {
         windowSize={10}
         initialNumToRender={6}
         updateCellsBatchingPeriod={50}
-        contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: insets.bottom + 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 16 }}
         columnWrapperStyle={styles.columnWrapper}
       />
     </View>

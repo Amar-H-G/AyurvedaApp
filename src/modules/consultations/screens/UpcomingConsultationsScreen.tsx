@@ -1,8 +1,8 @@
 /**
  * UpcomingConsultationsScreen — shows confirmed/queued bookings with cancel option.
  */
-import React, { useCallback, memo } from 'react';
-import { View, FlatList, StyleSheet, Alert } from 'react-native';
+import React, { useState, useCallback, memo } from 'react';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConsultationStore } from '../../../store/consultations/consultationStore';
 import { useBooking } from '../hooks/useBooking';
@@ -13,6 +13,7 @@ import { Card } from '../../../components/design-system/Card';
 import { Button } from '../../../components/design-system/Button';
 import { Chip } from '../../../components/design-system/Chip';
 import { EmptyState } from '../../../components/design-system/StateViews';
+import { CancellationModal } from '../../../components/modals/CancellationModal';
 import { format, parseISO } from 'date-fns';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -31,7 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface BookingCardProps {
   booking: Booking;
-  onCancel: (id: string) => void;
+  onCancel: (booking: Booking) => void;
 }
 
 const BookingCard = memo(({ booking, onCancel }: BookingCardProps) => {
@@ -71,7 +72,7 @@ const BookingCard = memo(({ booking, onCancel }: BookingCardProps) => {
           label="Cancel Booking"
           variant="outline"
           size="sm"
-          onPress={() => onCancel(booking.id)}
+          onPress={() => onCancel(booking)}
           style={styles.cancelBtn}
           accessibilityLabel={`Cancel booking with ${booking.doctorName}`}
         />
@@ -86,22 +87,29 @@ function UpcomingConsultationsBase(): React.JSX.Element {
   const getUpcomingBookings = useConsultationStore(state => state.getUpcomingBookings);
   const { cancel, isBooking } = useBooking();
 
+  const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+
   const upcoming = getUpcomingBookings();
 
-  const handleCancel = useCallback((bookingId: string) => {
-    Alert.alert(
-      'Cancel Booking',
-      'Are you sure you want to cancel this consultation?',
-      [
-        { text: 'Keep Booking', style: 'cancel' },
-        { text: 'Cancel Booking', style: 'destructive', onPress: () => cancel(bookingId) },
-      ]
-    );
-  }, [cancel]);
+  const handleCancelPress = useCallback((booking: Booking) => {
+    setCancelTarget(booking);
+  }, []);
+
+  const handleConfirmCancel = useCallback(async () => {
+    if (!cancelTarget) return;
+    const success = await cancel(cancelTarget.id);
+    if (success) {
+      setCancelTarget(null);
+    }
+  }, [cancelTarget, cancel]);
+
+  const handleCloseModal = useCallback(() => {
+    setCancelTarget(null);
+  }, []);
 
   const renderItem = useCallback(({ item }: { item: Booking }) => (
-    <BookingCard booking={item} onCancel={handleCancel} />
-  ), [handleCancel]);
+    <BookingCard booking={item} onCancel={handleCancelPress} />
+  ), [handleCancelPress]);
 
   const keyExtractor = useCallback((item: Booking) => item.id, []);
 
@@ -122,6 +130,15 @@ function UpcomingConsultationsBase(): React.JSX.Element {
         removeClippedSubviews
         maxToRenderPerBatch={10}
         windowSize={5}
+      />
+
+      {/* Custom Cancellation Confirmation Modal */}
+      <CancellationModal
+        visible={!!cancelTarget}
+        booking={cancelTarget}
+        onConfirmCancel={handleConfirmCancel}
+        onClose={handleCloseModal}
+        isProcessing={isBooking}
       />
     </View>
   );
