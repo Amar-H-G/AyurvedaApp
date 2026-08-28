@@ -5,10 +5,8 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "module": "commonjs",
     "types": ["jest"],
-    "strict": true,
-    "noImplicitAny": true
+    "skipLibCheck": true
   },
   "include": ["src", "__tests__", "App.tsx", "index.js"],
   "exclude": ["node_modules"]

@@ -122,7 +122,7 @@ export const offlineQueue = {
       }
 
       // Delay between retries
-      await new Promise(res => setTimeout(res, ENV.SYNC_RETRY_DELAY_MS));
+      await new Promise(res => setTimeout(() => res(undefined), ENV.SYNC_RETRY_DELAY_MS));
     }
 
     await saveQueue(updatedQueue);

@@ -38,7 +38,7 @@ export const featureFlagsService = {
       }
 
       // Simulate remote fetch
-      await new Promise(res => setTimeout(res, 500));
+      await new Promise(res => setTimeout(() => res(undefined), 500));
       const remote = REMOTE_CONFIG;
       useAppStore.getState().setFeatureFlags(remote);
       await storage.set(STORAGE_KEY, remote);

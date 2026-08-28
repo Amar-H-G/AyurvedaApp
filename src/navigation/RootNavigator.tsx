@@ -3,7 +3,7 @@
  * Deep linking (Bonus #2) is configured here.
  */
 import React, { memo } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, TouchableOpacity } from 'react-native';
@@ -46,7 +46,7 @@ const HealthStack = createNativeStackNavigator<HealthStackParams>();
 const Tab = createBottomTabNavigator();
 
 // Deep linking config (Bonus #2)
-const linking = {
+const linking: LinkingOptions<any> = {
   prefixes: ['ayurveda://', 'https://ayurvedaapp.in'],
   config: {
     screens: {

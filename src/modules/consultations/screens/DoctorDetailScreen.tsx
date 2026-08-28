@@ -253,7 +253,7 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
 
         {/* Error */}
         {bookingError && (
-          <Card style={[styles.section, { backgroundColor: theme.colors.errorBackground }]}>
+          <Card style={StyleSheet.flatten([styles.section, { backgroundColor: theme.colors.errorBackground }])}>
             <Typography variant="bodySmall" color={theme.colors.error}>{bookingError}</Typography>
           </Card>
         )}

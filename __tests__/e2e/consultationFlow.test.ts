@@ -78,7 +78,7 @@ describe('Consultation Booking E2E Flow (Logic Level)', () => {
       date: availableSlot!.date,
       startTime: availableSlot!.startTime,
       endTime: availableSlot!.endTime,
-      status: 'confirmed' as const,
+      status: 'confirmed' as 'confirmed' | 'cancelled' | 'queued' | 'completed',
       consultationFee: doctor.consultationFee,
       createdAt: new Date().toISOString(),
     };
