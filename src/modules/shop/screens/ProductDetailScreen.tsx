@@ -2,6 +2,7 @@
  * ProductDetailScreen — Dynamic, production-quality details page for ANY product in the shop.
  * Displays full product details, image preview, pricing, discount, quantity selector,
  * description, ingredients chips, tags, and sticky cart/buy action controls.
+ * Add to Cart button state is derived dynamically from global useShopStore cart state.
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
@@ -41,6 +42,11 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
   const toggleWishlist = useShopStore(state => state.toggleWishlist);
   const isWishlisted = useShopStore(state => state.wishlistIds.includes(productId));
   const cartItemCount = useShopStore(state => state.getCartItemCount());
+  
+  // Real cart state selector from Zustand global store
+  const cartItem = useShopStore(state => state.getCartItem(productId));
+  const cartQty = cartItem?.quantity ?? 0;
+  
   const showToast = useAppStore(state => state.showToast);
 
   const loadProductDetails = useCallback(async () => {
@@ -119,6 +125,18 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
   const hasDiscount = product.discount > 0;
   const savingsAmount = hasDiscount ? product.originalPrice - product.price : 0;
   const totalPrice = product.price * selectedQuantity;
+
+  const buttonBgColor = !product.inStock
+    ? theme.colors.surfaceVariant
+    : cartQty > 0
+    ? '#10B981'
+    : theme.colors.primary;
+
+  const buttonLabel = !product.inStock
+    ? 'Out of Stock'
+    : cartQty > 0
+    ? `✓ Added (${cartQty}) in Cart • +${selectedQuantity} (₹${totalPrice})`
+    : `+ Add to Cart • ₹${totalPrice}`;
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
@@ -302,7 +320,7 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
         </View>
       </ScrollView>
 
-      {/* Sticky Bottom Action Bar */}
+      {/* Sticky Bottom Action Bar with Dynamic Cart State */}
       <View style={[
         styles.bottomBar,
         {
@@ -325,16 +343,16 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
         <TouchableOpacity
           style={[
             styles.actionButton,
-            { backgroundColor: product.inStock ? theme.colors.primary : theme.colors.surfaceVariant },
+            { backgroundColor: buttonBgColor },
           ]}
           onPress={handleAddToCart}
           disabled={!product.inStock}
-          accessibilityLabel={`Add to Cart for ₹${totalPrice}`}
+          accessibilityLabel={buttonLabel}
           accessibilityRole="button"
           testID="product-detail-add-to-cart-btn"
         >
           <Typography variant="label" color={product.inStock ? '#FFFFFF' : theme.colors.textDisabled} style={styles.btnText}>
-            {product.inStock ? `+ Add to Cart • ₹${totalPrice}` : 'Out of Stock'}
+            {buttonLabel}
           </Typography>
         </TouchableOpacity>
 

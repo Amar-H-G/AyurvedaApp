@@ -1,8 +1,9 @@
 /**
  * CartScreen — cart management, quantity updates, checkout summary.
+ * Replaces native OS Alert with custom animated OrderSuccessModal.
  */
-import React, { useCallback, memo } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useCallback, useState, memo } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShopStore } from '../../../store/shop/shopStore';
 import { CartItem } from '../../../types';
@@ -13,7 +14,11 @@ import { Button } from '../../../components/design-system/Button';
 import { EmptyState } from '../../../components/design-system/StateViews';
 import { shopApi } from '../../../services/api/shopApi';
 import { useAppStore } from '../../../store/app/appStore';
-import { Image } from 'react-native';
+import { OrderSuccessModal } from '../components/OrderSuccessModal';
+
+interface Props {
+  navigation: { navigate: (screen: string, params?: object) => void };
+}
 
 interface CartItemRowProps { item: CartItem }
 
@@ -67,7 +72,7 @@ const CartItemRow = memo(({ item }: CartItemRowProps) => {
   );
 });
 
-function CartScreenBase(): React.JSX.Element {
+function CartScreenBase({ navigation }: Props): React.JSX.Element {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const cart = useShopStore(s => s.cart);
@@ -75,21 +80,42 @@ function CartScreenBase(): React.JSX.Element {
   const clearCart = useShopStore(s => s.clearCart);
   const showToast = useAppStore(s => s.showToast);
 
+  const [orderModal, setOrderModal] = useState({
+    visible: false,
+    orderId: '',
+    total: 0,
+    count: 0,
+  });
+
   const total = getCartTotal();
 
   const handleCheckout = useCallback(async () => {
     const items = cart.items.map(i => ({ productId: i.product.id, quantity: i.quantity }));
+    const totalCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
     const result = await shopApi.checkoutCart(items);
     if (result.success) {
-      Alert.alert(
-        '🎉 Order Placed!',
-        `Order #${result.data.orderId}\nTotal: ₹${result.data.total}`,
-        [{ text: 'Great!', onPress: clearCart }]
-      );
+      setOrderModal({
+        visible: true,
+        orderId: result.data.orderId,
+        total: result.data.total || total,
+        count: totalCount,
+      });
     } else {
       showToast({ type: 'error', message: 'Checkout failed. Please try again.' });
     }
-  }, [cart.items, clearCart, showToast]);
+  }, [cart.items, total, showToast]);
+
+  const handleContinueShopping = useCallback(() => {
+    setOrderModal(prev => ({ ...prev, visible: false }));
+    clearCart();
+  }, [clearCart]);
+
+  const handleViewHealthRecords = useCallback(() => {
+    setOrderModal(prev => ({ ...prev, visible: false }));
+    clearCart();
+    navigation.navigate('Health');
+  }, [clearCart, navigation]);
 
   const renderItem = useCallback(({ item }: { item: CartItem }) => (
     <CartItemRow item={item} />
@@ -129,6 +155,15 @@ function CartScreenBase(): React.JSX.Element {
         contentContainerStyle={{ paddingBottom: insets.bottom + 16, flexGrow: 1 }}
         removeClippedSubviews
         maxToRenderPerBatch={10}
+      />
+
+      <OrderSuccessModal
+        visible={orderModal.visible}
+        orderId={orderModal.orderId}
+        totalAmount={orderModal.total}
+        itemCount={orderModal.count}
+        onContinueShopping={handleContinueShopping}
+        onViewHealthRecords={handleViewHealthRecords}
       />
     </View>
   );

@@ -1,6 +1,7 @@
 /**
  * ProductCard — memoized, structurally uniform card for the 2-column shop grid.
  * Enforces rigid vertical alignment, fixed image ratio, fixed title height, and anchored buttons.
+ * Add to Cart button state is derived dynamically from global useShopStore cart state.
  */
 import React, { memo, useCallback } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
@@ -16,7 +17,6 @@ interface ProductCardProps {
 }
 
 const { width } = Dimensions.get('window');
-// Calculate rigid card width for 2-column grid with 12px gap & 16px horizontal padding
 const CARD_WIDTH = (width - 32 - 12) / 2;
 
 function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Element {
@@ -26,6 +26,11 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
   const addToCart = useShopStore(state => state.addToCart);
   const toggleWishlist = useShopStore(state => state.toggleWishlist);
   const isWishlisted = useShopStore(state => state.wishlistIds.includes(product.id));
+  
+  // Real cart state selector from Zustand global store
+  const cartItem = useShopStore(state => state.getCartItem(product.id));
+  const isInCart = !!cartItem && cartItem.quantity > 0;
+  const cartQty = cartItem?.quantity ?? 0;
 
   const handleAddToCart = useCallback((e: { stopPropagation?: () => void }) => {
     e.stopPropagation?.();
@@ -39,6 +44,22 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
 
   const hasDiscount = product.discount > 0;
   const isInStock = product.inStock;
+
+  const buttonBgColor = !isInStock
+    ? theme.colors.surfaceVariant
+    : isInCart
+    ? '#10B981'
+    : theme.colors.primary;
+
+  const buttonTextColor = !isInStock
+    ? theme.colors.textDisabled
+    : '#FFFFFF';
+
+  const buttonLabel = !isInStock
+    ? 'Out of Stock'
+    : isInCart
+    ? `✓ Added (${cartQty})`
+    : '+ Add to Cart';
 
   return (
     <TouchableOpacity
@@ -134,27 +155,28 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
           </View>
         </View>
 
-        {/* Anchored Bottom Action Button */}
+        {/* Anchored Bottom Action Button with Dynamic Cart State */}
         <TouchableOpacity
           style={[
             styles.addBtn,
             {
-              backgroundColor: isInStock ? theme.colors.primary : theme.colors.surfaceVariant,
-              borderColor: isInStock ? theme.colors.primary : theme.colors.border,
+              backgroundColor: buttonBgColor,
+              borderColor: buttonBgColor,
             },
           ]}
           onPress={handleAddToCart}
           disabled={!isInStock}
-          accessibilityLabel={`Add ${product.name} to cart`}
+          accessibilityLabel={buttonLabel}
           accessibilityRole="button"
           accessibilityState={{ disabled: !isInStock }}
+          testID={`add-to-cart-btn-${product.id}`}
         >
           <Typography
             variant="label"
-            color={isInStock ? theme.colors.textOnPrimary : theme.colors.textDisabled}
+            color={buttonTextColor}
             style={styles.addBtnText}
           >
-            {isInStock ? '+ Add to Cart' : 'Out of Stock'}
+            {buttonLabel}
           </Typography>
         </TouchableOpacity>
       </Card>
