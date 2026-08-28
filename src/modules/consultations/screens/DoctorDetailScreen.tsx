@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import {
-  View, ScrollView, Image, StyleSheet, FlatList, TouchableOpacity, Alert,
+  View, ScrollView, Image, StyleSheet, TouchableOpacity, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Doctor, TimeSlot } from '../../../types';
@@ -13,7 +13,9 @@ import { Typography } from '../../../components/design-system/Typography';
 import { Button } from '../../../components/design-system/Button';
 import { Card } from '../../../components/design-system/Card';
 import { Chip } from '../../../components/design-system/Chip';
-import { LoadingState, ErrorState } from '../../../components/design-system/StateViews';
+import { ErrorState } from '../../../components/design-system/StateViews';
+import { DoctorDetailsSkeleton } from '../../../components/skeletons/DoctorDetailsSkeleton';
+import { SlotSkeleton } from '../../../components/skeletons/SlotSkeleton';
 import { useBooking } from '../hooks/useBooking';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 
@@ -113,7 +115,7 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
     }
   }, [selectedSlot, doctor, book, clearError, navigation]);
 
-  if (isLoadingDoctor) return <LoadingState message="Loading doctor profile..." />;
+  if (isLoadingDoctor) return <DoctorDetailsSkeleton />;
   if (fetchError || !doctor) return <ErrorState message={fetchError ?? 'Doctor not found'} onRetry={() => navigation.goBack()} />;
 
   return (
@@ -171,7 +173,7 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
             Available Slots
           </Typography>
           {isLoadingSlots ? (
-            <LoadingState message="Loading slots..." />
+            <SlotSkeleton />
           ) : (
             <>
               {/* Date selector */}

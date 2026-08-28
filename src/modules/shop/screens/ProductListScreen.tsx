@@ -13,7 +13,8 @@ import { useTheme } from '../../../hooks/useTheme';
 import { SearchBar } from '../../../components/design-system/SearchBar';
 import { Typography } from '../../../components/design-system/Typography';
 import { Chip } from '../../../components/design-system/Chip';
-import { LoadingState, ErrorState, EmptyState } from '../../../components/design-system/StateViews';
+import { ErrorState, EmptyState } from '../../../components/design-system/StateViews';
+import { ProductGridSkeleton } from '../../../components/skeletons/ProductCardSkeleton';
 import { PRODUCT_CATEGORIES, SORT_OPTIONS } from '../../../constants';
 import { useShopStore } from '../../../store/shop/shopStore';
 
@@ -30,7 +31,7 @@ function ProductListScreenBase({ navigation }: Props): React.JSX.Element {
   const [showFilters, setShowFilters] = useState(false);
 
   const {
-    products, isLoading, isLoadingMore, hasMore, error,
+    products, isLoading, isLoadingMore, error,
     searchQuery, filters, setSearchQuery, setFilters, loadMore, refresh,
   } = useProducts();
 
@@ -61,7 +62,7 @@ function ProductListScreenBase({ navigation }: Props): React.JSX.Element {
 
   const renderFooter = useCallback(() => {
     if (!isLoadingMore) return null;
-    return <LoadingState message="Loading more products..." />;
+    return <ProductGridSkeleton count={2} />;
   }, [isLoadingMore]);
 
   const ListHeader = useMemo(() => (
@@ -146,9 +147,22 @@ function ProductListScreenBase({ navigation }: Props): React.JSX.Element {
     setSearchQuery, handleSort, handleCategoryFilter, handleInStockToggle, navigation,
   ]);
 
-  if (isLoading) return <LoadingState message="Loading products..." />;
+  if (isLoading && products.length === 0) {
+    return (
+      <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+        {ListHeader}
+        <ProductGridSkeleton count={6} />
+      </View>
+    );
+  }
+
   if (error && products.length === 0) {
-    return <ErrorState message={error} onRetry={refresh} />;
+    return (
+      <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+        {ListHeader}
+        <ErrorState message={error} onRetry={refresh} />
+      </View>
+    );
   }
 
   return (

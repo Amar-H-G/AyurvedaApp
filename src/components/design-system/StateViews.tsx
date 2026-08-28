@@ -2,24 +2,68 @@
  * Design System — EmptyState, ErrorState, LoadingState.
  */
 import React, { memo } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Typography } from './Typography';
 import { Button } from './Button';
+import {
+  DoctorListSkeleton,
+  DoctorDetailsSkeleton,
+  SlotSkeleton,
+  UpcomingConsultationSkeleton,
+  ProductGridSkeleton,
+  CartSkeleton,
+  HealthTimelineSkeleton,
+  Skeleton,
+} from '../skeletons';
 
 // ─── Loading ────────────────────────────────────────────────────────────────
 
+export type LoadingVariant =
+  | 'doctor-list'
+  | 'doctor-detail'
+  | 'product-grid'
+  | 'health-timeline'
+  | 'cart'
+  | 'slots'
+  | 'upcoming'
+  | 'generic';
+
 interface LoadingProps {
   message?: string;
+  variant?: LoadingVariant;
 }
-export const LoadingState = memo(({ message = 'Loading...' }: LoadingProps) => {
+
+export const LoadingState = memo(({ message, variant }: LoadingProps) => {
   const theme = useTheme();
+
+  // Infer variant from message if not explicitly provided
+  let activeVariant = variant;
+  if (!activeVariant && message) {
+    const lower = message.toLowerCase();
+    if (lower.includes('doctor profile')) activeVariant = 'doctor-detail';
+    else if (lower.includes('doctor')) activeVariant = 'doctor-list';
+    else if (lower.includes('product')) activeVariant = 'product-grid';
+    else if (lower.includes('health') || lower.includes('record')) activeVariant = 'health-timeline';
+    else if (lower.includes('cart')) activeVariant = 'cart';
+    else if (lower.includes('slot')) activeVariant = 'slots';
+    else if (lower.includes('consultation')) activeVariant = 'upcoming';
+  }
+
+  if (activeVariant === 'doctor-list') return <DoctorListSkeleton count={4} />;
+  if (activeVariant === 'doctor-detail') return <DoctorDetailsSkeleton />;
+  if (activeVariant === 'product-grid') return <ProductGridSkeleton count={6} />;
+  if (activeVariant === 'health-timeline') return <HealthTimelineSkeleton groupCount={2} />;
+  if (activeVariant === 'cart') return <CartSkeleton itemCount={2} />;
+  if (activeVariant === 'slots') return <SlotSkeleton />;
+  if (activeVariant === 'upcoming') return <UpcomingConsultationSkeleton count={3} />;
+
+  // Default clean generic skeleton container
   return (
-    <View style={styles.center} accessibilityLiveRegion="polite">
-      <ActivityIndicator size="large" color={theme.colors.primary} />
-      <Typography variant="bodySmall" color={theme.colors.textSecondary} style={styles.message}>
-        {message}
-      </Typography>
+    <View style={styles.genericSkeletonContainer} accessibilityLiveRegion="polite">
+      <Skeleton width="90%" height={80} style={{ marginBottom: 12 }} />
+      <Skeleton width="90%" height={80} style={{ marginBottom: 12 }} />
+      <Skeleton width="90%" height={80} />
     </View>
   );
 });
@@ -73,24 +117,10 @@ export const ErrorState = memo(({ message, onRetry }: ErrorProps) => {
   );
 });
 
-// ─── Skeleton ────────────────────────────────────────────────────────────────
+// ─── Skeleton Helper Export ──────────────────────────────────────────────────
 
 export const SkeletonLine = memo(({ width, height = 16, style }: { width?: number | string; height?: number; style?: object }) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        {
-          width: width ?? '100%',
-          height,
-          borderRadius: 4,
-          backgroundColor: theme.colors.shimmerBase,
-        },
-        style,
-      ]}
-      accessibilityElementsHidden
-    />
-  );
+  return <Skeleton width={width ?? '100%'} height={height} style={style} />;
 });
 
 const styles = StyleSheet.create({
@@ -100,6 +130,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
     minHeight: 200,
+  },
+  genericSkeletonContainer: {
+    flex: 1,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emoji: {
     marginBottom: 16,

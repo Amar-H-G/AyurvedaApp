@@ -17,7 +17,8 @@ import { useTheme } from '../../../hooks/useTheme';
 import { SearchBar } from '../../../components/design-system/SearchBar';
 import { Typography } from '../../../components/design-system/Typography';
 import { Chip } from '../../../components/design-system/Chip';
-import { LoadingState, ErrorState, EmptyState } from '../../../components/design-system/StateViews';
+import { ErrorState, EmptyState } from '../../../components/design-system/StateViews';
+import { DoctorListSkeleton } from '../../../components/skeletons/DoctorCardSkeleton';
 import { SPECIALTIES } from '../../../constants';
 import { useAppStore } from '../../../store/app/appStore';
 
@@ -42,7 +43,7 @@ function DoctorListScreenBase({ navigation }: Props): React.JSX.Element {
   const isSyncing = useAppStore(state => state.isSyncing);
 
   const {
-    doctors, isLoading, isLoadingMore, hasMore, error,
+    doctors, isLoading, isLoadingMore, error,
     searchQuery, filters, setSearchQuery, setFilters, loadMore, refresh,
   } = useDoctors();
 
@@ -70,7 +71,7 @@ function DoctorListScreenBase({ navigation }: Props): React.JSX.Element {
 
   const renderFooter = useCallback(() => {
     if (!isLoadingMore) return null;
-    return <LoadingState message="Loading more doctors..." />;
+    return <DoctorListSkeleton count={2} />;
   }, [isLoadingMore]);
 
   const ListHeader = useMemo(() => (
@@ -140,10 +141,11 @@ function DoctorListScreenBase({ navigation }: Props): React.JSX.Element {
     doctors.length, theme, setSearchQuery, handleSpecialtyFilter, handleAvailableToday,
   ]);
 
-  if (isLoading) {
+  if (isLoading && doctors.length === 0) {
     return (
       <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-        <LoadingState message="Finding doctors..." />
+        {ListHeader}
+        <DoctorListSkeleton count={4} />
       </View>
     );
   }

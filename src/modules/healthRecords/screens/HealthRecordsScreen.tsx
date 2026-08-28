@@ -7,13 +7,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthRecords } from '../hooks/useHealthRecords';
-import { HealthRecord, HealthRecordGroup, RecordType } from '../../../types';
+import { HealthRecord, RecordType } from '../../../types';
 import { useTheme } from '../../../hooks/useTheme';
 import { Typography } from '../../../components/design-system/Typography';
 import { Card } from '../../../components/design-system/Card';
 import { Chip } from '../../../components/design-system/Chip';
 import { SearchBar } from '../../../components/design-system/SearchBar';
-import { LoadingState, ErrorState, EmptyState } from '../../../components/design-system/StateViews';
+import { ErrorState, EmptyState } from '../../../components/design-system/StateViews';
+import { HealthTimelineSkeleton } from '../../../components/skeletons/HealthTimelineSkeleton';
 import { RECORD_TYPE_LABELS, RECORD_TYPES } from '../../../constants';
 import { Image } from 'react-native';
 
@@ -170,8 +171,23 @@ function HealthRecordsScreenBase(): React.JSX.Element {
     </View>
   ), [searchQuery, filters.type, setSearchQuery, handleTypeFilter]);
 
-  if (isLoading) return <LoadingState message="Loading health records..." />;
-  if (error && groups.length === 0) return <ErrorState message={error} onRetry={refresh} />;
+  if (isLoading && groups.length === 0) {
+    return (
+      <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+        {ListHeader}
+        <HealthTimelineSkeleton groupCount={2} />
+      </View>
+    );
+  }
+
+  if (error && groups.length === 0) {
+    return (
+      <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+        {ListHeader}
+        <ErrorState message={error} onRetry={refresh} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
