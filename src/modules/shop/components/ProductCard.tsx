@@ -2,6 +2,7 @@
  * ProductCard — memoized, structurally uniform card for the 2-column shop grid.
  * Enforces rigid vertical alignment, fixed image ratio, fixed title height, and anchored buttons.
  * Add to Cart button state is derived dynamically from global useShopStore cart state.
+ * When product is in cart, button is set to '✓ Added' and disabled (non-clickable).
  */
 import React, { memo, useCallback } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
@@ -30,12 +31,12 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
   // Real cart state selector from Zustand global store
   const cartItem = useShopStore(state => state.getCartItem(product.id));
   const isInCart = !!cartItem && cartItem.quantity > 0;
-  const cartQty = cartItem?.quantity ?? 0;
 
   const handleAddToCart = useCallback((e: { stopPropagation?: () => void }) => {
     e.stopPropagation?.();
+    if (isInCart) return; // Prevent any action if already added
     addToCart(product, 1);
-  }, [product, addToCart]);
+  }, [product, addToCart, isInCart]);
 
   const handleWishlist = useCallback((e: { stopPropagation?: () => void }) => {
     e.stopPropagation?.();
@@ -44,6 +45,8 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
 
   const hasDiscount = product.discount > 0;
   const isInStock = product.inStock;
+
+  const isBtnDisabled = !isInStock || isInCart;
 
   const buttonBgColor = !isInStock
     ? theme.colors.surfaceVariant
@@ -58,7 +61,7 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
   const buttonLabel = !isInStock
     ? 'Out of Stock'
     : isInCart
-    ? `✓ Added (${cartQty})`
+    ? '✓ Added'
     : '+ Add to Cart';
 
   return (
@@ -155,7 +158,7 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
           </View>
         </View>
 
-        {/* Anchored Bottom Action Button with Dynamic Cart State */}
+        {/* Anchored Bottom Action Button with Non-clickable 'Added' State */}
         <TouchableOpacity
           style={[
             styles.addBtn,
@@ -165,10 +168,10 @@ function ProductCardBase({ product, onPress }: ProductCardProps): React.JSX.Elem
             },
           ]}
           onPress={handleAddToCart}
-          disabled={!isInStock}
+          disabled={isBtnDisabled}
           accessibilityLabel={buttonLabel}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !isInStock }}
+          accessibilityState={{ disabled: isBtnDisabled }}
           testID={`add-to-cart-btn-${product.id}`}
         >
           <Typography

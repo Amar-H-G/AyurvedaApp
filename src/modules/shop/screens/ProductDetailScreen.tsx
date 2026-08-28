@@ -2,7 +2,7 @@
  * ProductDetailScreen — Dynamic, production-quality details page for ANY product in the shop.
  * Displays full product details, image preview, pricing, discount, quantity selector,
  * description, ingredients chips, tags, and sticky cart/buy action controls.
- * Add to Cart button state is derived dynamically from global useShopStore cart state.
+ * When product is in cart, Add to Cart button is set to '✓ Added' and disabled (non-clickable).
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
@@ -45,7 +45,7 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
   
   // Real cart state selector from Zustand global store
   const cartItem = useShopStore(state => state.getCartItem(productId));
-  const cartQty = cartItem?.quantity ?? 0;
+  const isInCart = !!cartItem && cartItem.quantity > 0;
   
   const showToast = useAppStore(state => state.showToast);
 
@@ -78,19 +78,21 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
   }, [loadProductDetails]);
 
   const handleAddToCart = useCallback(() => {
-    if (!product) return;
+    if (!product || isInCart) return;
     addToCart(product, selectedQuantity);
     showToast({
       message: `Added ${selectedQuantity}x ${product.name} to Cart`,
       type: 'success',
     });
-  }, [product, selectedQuantity, addToCart, showToast]);
+  }, [product, selectedQuantity, isInCart, addToCart, showToast]);
 
   const handleBuyNow = useCallback(() => {
     if (!product) return;
-    addToCart(product, selectedQuantity);
+    if (!isInCart) {
+      addToCart(product, selectedQuantity);
+    }
     navigation.navigate('Cart');
-  }, [product, selectedQuantity, addToCart, navigation]);
+  }, [product, selectedQuantity, isInCart, addToCart, navigation]);
 
   const handleWishlistToggle = useCallback(() => {
     toggleWishlist(productId);
@@ -126,16 +128,18 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
   const savingsAmount = hasDiscount ? product.originalPrice - product.price : 0;
   const totalPrice = product.price * selectedQuantity;
 
+  const isBtnDisabled = !product.inStock || isInCart;
+
   const buttonBgColor = !product.inStock
     ? theme.colors.surfaceVariant
-    : cartQty > 0
+    : isInCart
     ? '#10B981'
     : theme.colors.primary;
 
   const buttonLabel = !product.inStock
     ? 'Out of Stock'
-    : cartQty > 0
-    ? `✓ Added (${cartQty}) in Cart • +${selectedQuantity} (₹${totalPrice})`
+    : isInCart
+    ? '✓ Added to Cart'
     : `+ Add to Cart • ₹${totalPrice}`;
 
   return (
@@ -250,35 +254,37 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
           </View>
 
           {/* Quantity Selector */}
-          <View style={styles.quantitySection}>
-            <Typography variant="label" color={theme.colors.textPrimary}>
-              Select Quantity:
-            </Typography>
-            <View style={[styles.quantityControl, { borderColor: theme.colors.border }]}>
-              <TouchableOpacity
-                style={[styles.qtyBtn, { backgroundColor: theme.colors.surfaceVariant }]}
-                onPress={() => setSelectedQuantity(q => Math.max(1, q - 1))}
-                disabled={selectedQuantity <= 1}
-              >
-                <Typography variant="h4" color={selectedQuantity <= 1 ? theme.colors.textDisabled : theme.colors.textPrimary}>
-                  -
-                </Typography>
-              </TouchableOpacity>
-
-              <Typography variant="h4" color={theme.colors.textPrimary} style={styles.qtyText}>
-                {selectedQuantity}
+          {!isInCart && (
+            <View style={styles.quantitySection}>
+              <Typography variant="label" color={theme.colors.textPrimary}>
+                Select Quantity:
               </Typography>
+              <View style={[styles.quantityControl, { borderColor: theme.colors.border }]}>
+                <TouchableOpacity
+                  style={[styles.qtyBtn, { backgroundColor: theme.colors.surfaceVariant }]}
+                  onPress={() => setSelectedQuantity(q => Math.max(1, q - 1))}
+                  disabled={selectedQuantity <= 1}
+                >
+                  <Typography variant="h4" color={selectedQuantity <= 1 ? theme.colors.textDisabled : theme.colors.textPrimary}>
+                    -
+                  </Typography>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.qtyBtn, { backgroundColor: theme.colors.surfaceVariant }]}
-                onPress={() => setSelectedQuantity(q => q + 1)}
-              >
-                <Typography variant="h4" color={theme.colors.textPrimary}>
-                  +
+                <Typography variant="h4" color={theme.colors.textPrimary} style={styles.qtyText}>
+                  {selectedQuantity}
                 </Typography>
-              </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.qtyBtn, { backgroundColor: theme.colors.surfaceVariant }]}
+                  onPress={() => setSelectedQuantity(q => q + 1)}
+                >
+                  <Typography variant="h4" color={theme.colors.textPrimary}>
+                    +
+                  </Typography>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Description Section */}
           <View style={styles.section}>
@@ -320,7 +326,7 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
         </View>
       </ScrollView>
 
-      {/* Sticky Bottom Action Bar with Dynamic Cart State */}
+      {/* Sticky Bottom Action Bar with Non-clickable 'Added' State */}
       <View style={[
         styles.bottomBar,
         {
@@ -346,26 +352,27 @@ export function ProductDetailScreen({ navigation, route }: Props): React.JSX.Ele
             { backgroundColor: buttonBgColor },
           ]}
           onPress={handleAddToCart}
-          disabled={!product.inStock}
+          disabled={isBtnDisabled}
           accessibilityLabel={buttonLabel}
           accessibilityRole="button"
+          accessibilityState={{ disabled: isBtnDisabled }}
           testID="product-detail-add-to-cart-btn"
         >
-          <Typography variant="label" color={product.inStock ? '#FFFFFF' : theme.colors.textDisabled} style={styles.btnText}>
+          <Typography variant="label" color={isBtnDisabled && !isInCart ? theme.colors.textDisabled : '#FFFFFF'} style={styles.btnText}>
             {buttonLabel}
           </Typography>
         </TouchableOpacity>
 
-        {/* Buy Now Button */}
+        {/* Go to Cart / Buy Now Button */}
         {product.inStock && (
           <TouchableOpacity
             style={[styles.buyNowButton, { backgroundColor: theme.colors.secondary }]}
             onPress={handleBuyNow}
-            accessibilityLabel="Buy Now"
+            accessibilityLabel={isInCart ? 'Go to Cart' : 'Buy Now'}
             accessibilityRole="button"
           >
             <Typography variant="label" color="#FFFFFF" style={styles.btnText}>
-              Buy Now
+              {isInCart ? 'Go to Cart →' : 'Buy Now'}
             </Typography>
           </TouchableOpacity>
         )}
