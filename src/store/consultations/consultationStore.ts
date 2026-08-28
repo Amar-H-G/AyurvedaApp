@@ -91,15 +91,25 @@ export const useConsultationStore = create<ConsultationState>((set, get) => ({
   },
 
   getUpcomingBookings: () => {
+    const todayStr = new Date().toISOString().split('T')[0];
     const now = new Date();
+
     return get().bookings.filter(b => {
       if (b.status === 'cancelled') return false;
-      const bookingDate = new Date(`${b.date}T${b.startTime}:00`);
-      return bookingDate >= now;
+      // Active non-cancelled bookings for today or future dates remain visible
+      if (b.date >= todayStr) return true;
+
+      try {
+        const timePart = b.startTime.includes(':') ? b.startTime.split(' ')[0] : '00:00';
+        const bookingDate = new Date(`${b.date}T${timePart}:00`);
+        return bookingDate >= now;
+      } catch (e) {
+        return true;
+      }
     }).sort((a, b) => {
-      const dateA = new Date(`${a.date}T${a.startTime}:00`);
-      const dateB = new Date(`${b.date}T${b.startTime}:00`);
-      return dateA.getTime() - dateB.getTime();
+      const dateA = `${a.date}T${a.startTime}`;
+      const dateB = `${b.date}T${b.startTime}`;
+      return dateA.localeCompare(dateB);
     });
   },
 

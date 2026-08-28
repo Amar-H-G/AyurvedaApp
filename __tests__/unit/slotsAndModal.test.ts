@@ -55,7 +55,7 @@ describe('Available Slots UI & Time Formatting Logic', () => {
     const testProduct: Product = {
       id: 'prod_1',
       name: 'Amrutam Nari Soundarya Oil for Skin & Hair Care',
-      category: 'Oil',
+      category: 'Oils',
       price: 499,
       originalPrice: 650,
       discount: 23,
@@ -65,7 +65,8 @@ describe('Available Slots UI & Time Formatting Logic', () => {
       imageUrl: 'https://example.com/oil.jpg',
       description: 'Herbal oil',
       ingredients: ['Sesame', 'Rose'],
-      usageInstructions: 'Apply daily',
+      tags: ['Skin', 'Hair'],
+      quantity: 15,
     };
 
     expect(testProduct.name.length).toBeGreaterThan(20);
