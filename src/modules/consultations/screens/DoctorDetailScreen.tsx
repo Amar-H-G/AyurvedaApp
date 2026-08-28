@@ -1,9 +1,9 @@
 /**
- * DoctorDetailScreen — full profile, slot picker, booking flow.
+ * DoctorDetailScreen — full profile, slot picker, custom booking modal flow.
  */
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import {
-  View, ScrollView, Image, StyleSheet, TouchableOpacity, Alert,
+  View, ScrollView, Image, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Doctor, TimeSlot } from '../../../types';
@@ -16,19 +16,26 @@ import { Chip } from '../../../components/design-system/Chip';
 import { ErrorState } from '../../../components/design-system/StateViews';
 import { DoctorDetailsSkeleton } from '../../../components/skeletons/DoctorDetailsSkeleton';
 import { SlotSkeleton } from '../../../components/skeletons/SlotSkeleton';
+import { AvailableSlotsSection } from '../components/AvailableSlotsSection';
+import { BookingConfirmationModal, BookingDetailsPayload } from '../../../components/modals/BookingConfirmationModal';
 import { useBooking } from '../hooks/useBooking';
-import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 
 interface Props {
   route: { params: { doctorId: string } };
   navigation: { goBack: () => void; navigate: (s: string, p?: object) => void };
 }
 
-function formatDay(dateStr: string): string {
-  const date = parseISO(dateStr);
-  if (isToday(date)) return 'Today';
-  if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'EEE, MMM d');
+function formatTimeForButton(timeStr: string): string {
+  if (!timeStr) return '';
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  if (isNaN(hours)) return timeStr;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  const padHours = hours < 10 ? `0${hours}` : `${hours}`;
+  return `${padHours}:${minutes} ${ampm}`;
 }
 
 function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element {
@@ -43,6 +50,9 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
   const [isLoadingDoctor, setIsLoadingDoctor] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Custom Modal state
+  const [confirmedBooking, setConfirmedBooking] = useState<BookingDetailsPayload | null>(null);
 
   const { book, isBooking, bookingError, clearError } = useBooking();
 
@@ -93,6 +103,11 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
     [selectedDate, slotsByDate]
   );
 
+  const handleSelectDate = useCallback((date: string) => {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+  }, []);
+
   const handleBook = useCallback(async () => {
     if (!selectedSlot || !doctor) return;
 
@@ -103,25 +118,39 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
     );
 
     if (success) {
-      Alert.alert(
-        'Booking Confirmed!',
-        `Your consultation with ${doctor.name} is booked for ${format(parseISO(selectedSlot.date), 'MMMM d, yyyy')} at ${selectedSlot.startTime}.`,
-        [
-          { text: 'View Upcoming', onPress: () => navigation.navigate('UpcomingConsultations') },
-          { text: 'OK', style: 'cancel' },
-        ]
-      );
+      setConfirmedBooking({
+        doctorName: doctor.name,
+        date: selectedSlot.date,
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
+        consultationFee: doctor.consultationFee,
+      });
       setSelectedSlot(null);
     }
-  }, [selectedSlot, doctor, book, clearError, navigation]);
+  }, [selectedSlot, doctor, book, clearError]);
+
+  const handleConfirmViewUpcoming = useCallback(() => {
+    setConfirmedBooking(null);
+    navigation.navigate('UpcomingConsultations');
+  }, [navigation]);
+
+  const handleCloseModal = useCallback(() => {
+    setConfirmedBooking(null);
+  }, []);
 
   if (isLoadingDoctor) return <DoctorDetailsSkeleton />;
   if (fetchError || !doctor) return <ErrorState message={fetchError ?? 'Doctor not found'} onRetry={() => navigation.goBack()} />;
 
+  const buttonLabel = isBooking
+    ? 'Booking...'
+    : selectedSlot
+    ? `Book Consultation (${formatTimeForButton(selectedSlot.startTime)})`
+    : 'Select a Time Slot';
+
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
-        {/* Header */}
+        {/* Profile Header Card */}
         <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
           <Image source={{ uri: doctor.imageUrl }} style={styles.avatar} />
           <Typography variant="h2" color={theme.colors.textPrimary} align="center">
@@ -151,13 +180,13 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
           </View>
         </View>
 
-        {/* Bio */}
+        {/* Bio Card */}
         <Card style={styles.section}>
           <Typography variant="h4" color={theme.colors.textPrimary} style={styles.sectionTitle}>About</Typography>
           <Typography variant="body" color={theme.colors.textSecondary}>{doctor.bio}</Typography>
         </Card>
 
-        {/* Languages */}
+        {/* Languages Card */}
         <Card style={styles.section}>
           <Typography variant="h4" color={theme.colors.textPrimary} style={styles.sectionTitle}>Languages</Typography>
           <View style={styles.chipRow}>
@@ -167,93 +196,24 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
           </View>
         </Card>
 
-        {/* Slot Picker */}
-        <Card style={styles.section}>
-          <Typography variant="h4" color={theme.colors.textPrimary} style={styles.sectionTitle}>
-            Available Slots
-          </Typography>
-          {isLoadingSlots ? (
+        {/* Available Slots Section */}
+        {isLoadingSlots ? (
+          <Card style={styles.section}>
+            <Typography variant="h4" color={theme.colors.textPrimary} style={styles.sectionTitle}>Available Slots</Typography>
             <SlotSkeleton />
-          ) : (
-            <>
-              {/* Date selector */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-                {availableDates.map(date => (
-                  <TouchableOpacity
-                    key={date}
-                    onPress={() => { setSelectedDate(date); setSelectedSlot(null); }}
-                    style={[
-                      styles.dateChip,
-                      {
-                        backgroundColor: selectedDate === date ? theme.colors.primary : theme.colors.surfaceVariant,
-                        borderColor: selectedDate === date ? theme.colors.primary : theme.colors.border,
-                      },
-                    ]}
-                    accessibilityLabel={`Select date ${formatDay(date)}`}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: selectedDate === date }}
-                  >
-                    <Typography
-                      variant="label"
-                      color={selectedDate === date ? theme.colors.textOnPrimary : theme.colors.textSecondary}
-                    >
-                      {formatDay(date)}
-                    </Typography>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+          </Card>
+        ) : (
+          <AvailableSlotsSection
+            availableDates={availableDates}
+            selectedDate={selectedDate}
+            slotsForSelectedDate={slotsForSelectedDate}
+            selectedSlot={selectedSlot}
+            onSelectDate={handleSelectDate}
+            onSelectSlot={setSelectedSlot}
+          />
+        )}
 
-              {/* Time slots grid */}
-              <View style={styles.slotsGrid}>
-                {slotsForSelectedDate.map(slot => {
-                  const isSelected = selectedSlot?.id === slot.id;
-                  const isDisabled = slot.isBooked || slot.isExpired;
-
-                  return (
-                    <TouchableOpacity
-                      key={slot.id}
-                      onPress={() => !isDisabled && setSelectedSlot(slot)}
-                      style={[
-                        styles.slotChip,
-                        {
-                          backgroundColor: isSelected
-                            ? theme.colors.primary
-                            : isDisabled
-                            ? theme.colors.surfaceVariant
-                            : theme.colors.surface,
-                          borderColor: isSelected
-                            ? theme.colors.primary
-                            : isDisabled
-                            ? theme.colors.border
-                            : theme.colors.primary,
-                          opacity: isDisabled ? 0.5 : 1,
-                        },
-                      ]}
-                      disabled={isDisabled}
-                      accessibilityLabel={`${slot.startTime} slot${isDisabled ? ', unavailable' : ''}`}
-                      accessibilityState={{ disabled: isDisabled, selected: isSelected }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color={isSelected ? theme.colors.textOnPrimary : isDisabled ? theme.colors.textDisabled : theme.colors.textPrimary}
-                      >
-                        {slot.startTime}
-                      </Typography>
-                      {slot.isBooked && (
-                        <Typography variant="caption" color={theme.colors.textDisabled}>{'\n'}Booked</Typography>
-                      )}
-                      {slot.isExpired && (
-                        <Typography variant="caption" color={theme.colors.textDisabled}>{'\n'}Expired</Typography>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </>
-          )}
-        </Card>
-
-        {/* Error */}
+        {/* Booking Error Banner */}
         {bookingError && (
           <Card style={StyleSheet.flatten([styles.section, { backgroundColor: theme.colors.errorBackground }])}>
             <Typography variant="bodySmall" color={theme.colors.error}>{bookingError}</Typography>
@@ -261,10 +221,10 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
         )}
       </ScrollView>
 
-      {/* Book button — sticky at bottom */}
+      {/* Sticky Bottom Booking Bar */}
       <View style={[styles.bottomBar, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 8 }]}>
         <Button
-          label={isBooking ? 'Booking...' : selectedSlot ? `Book ${selectedSlot.startTime}` : 'Select a Time Slot'}
+          label={buttonLabel}
           onPress={handleBook}
           disabled={!selectedSlot || isBooking}
           isLoading={isBooking}
@@ -272,6 +232,14 @@ function DoctorDetailScreenBase({ route, navigation }: Props): React.JSX.Element
           testID="book-consultation-btn"
         />
       </View>
+
+      {/* Custom Booking Confirmation Modal */}
+      <BookingConfirmationModal
+        visible={!!confirmedBooking}
+        bookingDetails={confirmedBooking}
+        onConfirmViewUpcoming={handleConfirmViewUpcoming}
+        onClose={handleCloseModal}
+      />
     </View>
   );
 }
@@ -283,30 +251,9 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   statItem: { alignItems: 'center', flex: 1 },
   divider: { width: 1, height: 32, marginHorizontal: 8 },
-  section: { margin: 16, marginTop: 0, marginBottom: 8 },
+  section: { marginHorizontal: 16, marginBottom: 16, padding: 16 },
   sectionTitle: { marginBottom: 8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  dateScroll: { marginBottom: 12 },
-  dateChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  slotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  slotChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    minWidth: 70,
-  },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
