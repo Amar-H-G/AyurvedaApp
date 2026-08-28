@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Gold Ring -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M54,18 C73.882,18 90,34.118 90,54 C90,73.882 73.882,90 54,90 C34.118,90 18,73.882 18,54 C18,34.118 34.118,18 54,18 Z M54,22 C36.327,22 22,36.327 22,54 C22,71.673 36.327,86 54,86 C71.673,86 86,71.673 86,54 C86,36.327 71.673,22 54,22 Z" />
+    <!-- Center Sun / Drop -->
+    <path
+        android:fillColor="#E6C665"
+        android:pathData="M54,44 C58.418,44 62,47.582 62,52 C62,56.418 58.418,60 54,60 C49.582,60 46,56.418 46,52 C46,47.582 49.582,44 54,44 Z" />
+    <!-- Left Leaf -->
+    <path
+        android:fillColor="#FFFDF8"
+        android:pathData="M50,54 L27,42 C24,34 32,28 48,38 Z" />
+    <!-- Right Leaf -->
+    <path
+        android:fillColor="#FFFDF8"
+        android:pathData="M58,54 L81,42 C84,34 76,28 60,38 Z" />
+    <!-- Lotus Base -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M54,76 L34,62 C40,54 54,58 54,58 C54,58 68,54 74,62 Z" />
+    <!-- Center Stem -->
+    <path
+        android:fillColor="#2E7D5B"
+        android:pathData="M53,32 h2 v44 h-2 z" />
+</vector>

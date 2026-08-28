@@ -1,9 +1,9 @@
 /**
  * App.tsx — Root component.
  * Initialises: theme, storage, feature flags, network sync.
- * Wraps: SafeAreaProvider, ErrorBoundary, NavigationContainer, ToastContainer.
+ * Wraps: SafeAreaProvider, ErrorBoundary, NavigationContainer, ToastContainer, SplashScreenView.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ToastContainer } from './src/components/shared/ToastContainer';
 import { ErrorBoundary } from './src/components/shared/ErrorBoundary';
+import { SplashScreenView } from './src/components/shared/SplashScreenView';
 import { useNetworkSync } from './src/hooks/useNetworkSync';
 import { useConsultationStore } from './src/store/consultations/consultationStore';
 import { useShopStore } from './src/store/shop/shopStore';
@@ -23,6 +24,7 @@ const TAG = 'App';
 
 function AppContent(): React.JSX.Element {
   const theme = useTheme();
+  const [showSplash, setShowSplash] = useState(true);
 
   // Register network monitor + offline sync
   useNetworkSync();
@@ -51,6 +53,7 @@ function AppContent(): React.JSX.Element {
       />
       <RootNavigator />
       <ToastContainer />
+      {showSplash && <SplashScreenView onFinish={() => setShowSplash(false)} />}
     </View>
   );
 }
