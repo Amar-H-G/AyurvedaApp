@@ -119,13 +119,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     marginRight: 2,
   },
-  selectedCardShadow: {
-    elevation: 4,
-    shadowColor: '#124734',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-  },
+  selectedCardShadow: {},
   dayName: {
     fontSize: 11,
     fontWeight: '600',

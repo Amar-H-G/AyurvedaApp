@@ -23,9 +23,7 @@ function CardBase({ children, style, variant = 'elevated', padding = 'md' }: Car
   };
 
   const variantStyle: ViewStyle =
-    variant === 'elevated'
-      ? { backgroundColor: theme.colors.surface, ...theme.shadow.sm }
-      : variant === 'outlined'
+    variant === 'elevated' || variant === 'outlined'
       ? { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }
       : { backgroundColor: theme.colors.surfaceVariant };
 

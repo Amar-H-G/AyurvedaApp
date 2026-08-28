@@ -145,13 +145,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
   },
-  selectedSlotShadow: {
-    elevation: 3,
-    shadowColor: '#124734',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
+  selectedSlotShadow: {},
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
