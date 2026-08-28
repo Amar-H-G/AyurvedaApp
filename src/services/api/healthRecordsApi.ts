@@ -9,13 +9,9 @@ import { ENV } from '../../config/env';
 
 let _recordsCache: HealthRecord[] | null = null;
 
-/**
- * Lazy getter for 10,000 health records.
- * Built on demand in background, taking 0ms during top-level module import.
- */
 function getAllRecords(): HealthRecord[] {
   if (!_recordsCache) {
-    _recordsCache = generateHealthRecords(10000);
+    _recordsCache = generateHealthRecords(3000);
   }
   return _recordsCache;
 }
