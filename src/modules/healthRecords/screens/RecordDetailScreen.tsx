@@ -1,10 +1,10 @@
 /**
  * RecordDetailScreen — Dynamic health record detail view with full-screen
- * image preview modal, PDF viewer modal, and share/download actions.
+ * image preview modal, PDF viewer modal, custom share template modal, and download actions.
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator,
+  View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import { Button } from '../../../components/design-system/Button';
 import { RECORD_TYPE_LABELS } from '../../../constants';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
+import { ShareRecordModal } from '../components/ShareRecordModal';
 import { HealthStackParams } from '../../../navigation/RootNavigator';
 import { useAppStore } from '../../../store/app/appStore';
 
@@ -53,6 +54,7 @@ export function RecordDetailScreen(): React.JSX.Element {
   // Modals state
   const [selectedImage, setSelectedImage] = useState<Attachment | null>(null);
   const [selectedPdf, setSelectedPdf] = useState<Attachment | null>(null);
+  const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
   useEffect(() => {
     if (!recordId) return;
@@ -75,7 +77,7 @@ export function RecordDetailScreen(): React.JSX.Element {
 
   const handleShareRecord = useCallback(() => {
     if (!record) return;
-    Alert.alert('Share Record', `Sharing details for "${record.title}"`);
+    setIsShareModalVisible(true);
   }, [record]);
 
   const handleDownloadFullReport = useCallback(() => {
@@ -260,6 +262,12 @@ export function RecordDetailScreen(): React.JSX.Element {
         recordTitle={record.title}
         doctorName={record.doctorName}
         onClose={() => setSelectedPdf(null)}
+      />
+
+      <ShareRecordModal
+        visible={isShareModalVisible}
+        record={record}
+        onClose={() => setIsShareModalVisible(false)}
       />
     </View>
   );

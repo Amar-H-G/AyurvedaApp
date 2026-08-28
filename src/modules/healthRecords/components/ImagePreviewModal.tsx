@@ -32,8 +32,8 @@ export function ImagePreviewModal({
 
   const handleShare = useCallback(() => {
     if (!attachment) return;
-    Alert.alert('Share File', `Sharing ${attachment.fileName}`);
-  }, [attachment]);
+    showToast({ message: `Shared ${attachment.fileName} successfully!`, type: 'success' });
+  }, [attachment, showToast]);
 
   if (!attachment) return null;
 
