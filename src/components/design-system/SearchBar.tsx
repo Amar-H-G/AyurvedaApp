@@ -17,6 +17,8 @@ interface SearchBarProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   onClear?: () => void;
+  onSubmitEditing?: () => void;
+  editable?: boolean;
   style?: ViewStyle;
   autoFocus?: boolean;
   testID?: string;
@@ -27,6 +29,8 @@ function SearchBarBase({
   onChangeText,
   placeholder = 'Search...',
   onClear,
+  onSubmitEditing,
+  editable = true,
   style,
   autoFocus = false,
   testID,
@@ -71,6 +75,8 @@ function SearchBarBase({
           },
         ]}
         autoFocus={autoFocus}
+        editable={editable}
+        onSubmitEditing={onSubmitEditing}
         returnKeyType="search"
         clearButtonMode="never"
         accessibilityLabel={placeholder}

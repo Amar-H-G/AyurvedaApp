@@ -17,6 +17,7 @@ import { DoctorDetailScreen } from '../modules/consultations/screens/DoctorDetai
 import { UpcomingConsultationsScreen } from '../modules/consultations/screens/UpcomingConsultationsScreen';
 
 // Screens — Shop
+import { ShopHomeScreen } from '../modules/shop/screens/ShopHomeScreen';
 import { ProductListScreen } from '../modules/shop/screens/ProductListScreen';
 import { CartScreen } from '../modules/shop/screens/CartScreen';
 
@@ -31,7 +32,8 @@ export type ConsultationStackParams = {
 };
 
 export type ShopStackParams = {
-  ProductList: undefined;
+  ShopHome: undefined;
+  ProductList: { initialCategory?: string; initialSearch?: string } | undefined;
   ProductDetail: { productId: string };
   Cart: undefined;
 };
@@ -60,7 +62,8 @@ const linking: LinkingOptions<any> = {
       },
       Shop: {
         screens: {
-          ProductList: 'shop',
+          ShopHome: 'shop',
+          ProductList: 'shop/products',
           ProductDetail: 'shop/:productId',
           Cart: 'cart',
         },
@@ -136,6 +139,7 @@ function ShopNavigator() {
   const theme = useTheme();
   return (
     <ShopStack.Navigator
+      initialRouteName="ShopHome"
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.surface },
         headerTitleStyle: { color: theme.colors.textPrimary, fontWeight: '700' },
@@ -144,9 +148,14 @@ function ShopNavigator() {
       }}
     >
       <ShopStack.Screen
+        name="ShopHome"
+        component={ShopHomeScreen}
+        options={{ title: '🌿 Amrutam Shop' }}
+      />
+      <ShopStack.Screen
         name="ProductList"
         component={ProductListScreen}
-        options={{ title: '🛒 Ayurveda Shop' }}
+        options={{ title: 'All Products' }}
       />
       <ShopStack.Screen
         name="Cart"

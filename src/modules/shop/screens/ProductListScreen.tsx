@@ -1,7 +1,8 @@
 /**
- * ProductListScreen — shop home with infinite scroll, search, multi-filter, sort.
+ * ProductListScreen — 2-column product grid with search, sort, category filtering & infinite scroll.
+ * Handles initial category and search params passed from ShopHomeScreen.
  */
-import React, { useCallback, useMemo, useState, memo } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, memo } from 'react';
 import {
   View, FlatList, StyleSheet, ScrollView, TouchableOpacity,
 } from 'react-native';
@@ -20,12 +21,13 @@ import { useShopStore } from '../../../store/shop/shopStore';
 
 interface Props {
   navigation: { navigate: (screen: string, params?: object) => void };
+  route?: { params?: { initialCategory?: string; initialSearch?: string } };
 }
 
 const keyExtractor = (item: Product) => item.id;
 const NUM_COLUMNS = 2;
 
-function ProductListScreenBase({ navigation }: Props): React.JSX.Element {
+function ProductListScreenBase({ navigation, route }: Props): React.JSX.Element {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [showFilters, setShowFilters] = useState(false);
@@ -36,6 +38,17 @@ function ProductListScreenBase({ navigation }: Props): React.JSX.Element {
   } = useProducts();
 
   const cartItemCount = useShopStore(state => state.getCartItemCount());
+
+  // Listen to initial route params from ShopHomeScreen
+  useEffect(() => {
+    if (route?.params?.initialCategory) {
+      setFilters({ category: route.params.initialCategory as ProductFilters['category'] });
+      setShowFilters(true);
+    }
+    if (route?.params?.initialSearch) {
+      setSearchQuery(route.params.initialSearch);
+    }
+  }, [route?.params?.initialCategory, route?.params?.initialSearch, setFilters, setSearchQuery]);
 
   const handleProductPress = useCallback((product: Product) => {
     navigation.navigate('ProductDetail', { productId: product.id });
