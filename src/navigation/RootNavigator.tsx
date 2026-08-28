@@ -24,6 +24,7 @@ import { CartScreen } from '../modules/shop/screens/CartScreen';
 
 // Screens — Health Records
 import { HealthRecordsScreen } from '../modules/healthRecords/screens/HealthRecordsScreen';
+import { RecordDetailScreen } from '../modules/healthRecords/screens/RecordDetailScreen';
 
 // Type definitions for navigation params
 export type ConsultationStackParams = {
@@ -43,6 +44,7 @@ export type ShopStackParams = {
 export type HealthStackParams = {
   HealthRecords: undefined;
   RecordDetail: { recordId: string };
+  RecordDetails: { recordId: string };
 };
 
 const ConsultationStack = createNativeStackNavigator<ConsultationStackParams>();
@@ -75,6 +77,7 @@ const linking: LinkingOptions<any> = {
         screens: {
           HealthRecords: 'health',
           RecordDetail: 'health/:recordId',
+          RecordDetails: 'health/details/:recordId',
         },
       },
     },
@@ -194,6 +197,16 @@ function HealthNavigator() {
         name="HealthRecords"
         component={HealthRecordsScreen}
         options={{ title: '🏥 Health Records' }}
+      />
+      <HealthStack.Screen
+        name="RecordDetail"
+        component={RecordDetailScreen}
+        options={{ title: 'Record Details' }}
+      />
+      <HealthStack.Screen
+        name="RecordDetails"
+        component={RecordDetailScreen}
+        options={{ title: 'Record Details' }}
       />
     </HealthStack.Navigator>
   );

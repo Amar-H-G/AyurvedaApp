@@ -1,5 +1,6 @@
 /**
  * Deterministic health record generator — 10,000 records.
+ * Pre-sorts dataset once at generation time for O(1) initial access.
  */
 import { HealthRecord, RecordType, Attachment } from '../../types';
 import { RECORD_TYPES, AYURVEDIC_TAGS } from '../../constants';
@@ -52,7 +53,7 @@ function generateTitle(type: RecordType, index: number): string {
 }
 
 function generateAttachments(index: number): Attachment[] {
-  const count = index % 4; // 0–3 attachments
+  const count = (index % 3) + 1; // 1–3 attachments
   const attachments: Attachment[] = [];
   for (let i = 0; i < count; i++) {
     const isPdf = (index + i) % 2 === 0;
@@ -62,11 +63,11 @@ function generateAttachments(index: number): Attachment[] {
       type: isPdf ? 'pdf' : 'image',
       url: isPdf
         ? `https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf`
-        : `https://picsum.photos/seed/${attachId}/400/600`,
+        : `https://picsum.photos/seed/${attachId}/600/800`,
       fileName: isPdf ? `report_${index}_${i}.pdf` : `image_${index}_${i}.jpg`,
       thumbnailUrl: isPdf
         ? undefined
-        : `https://picsum.photos/seed/${attachId}/100/100`,
+        : `https://picsum.photos/seed/${attachId}/150/150`,
     });
   }
   return attachments;
@@ -103,6 +104,8 @@ export function generateHealthRecords(count: number = 10000): HealthRecord[] {
   for (let i = 0; i < count; i++) {
     records.push(generateHealthRecord(i));
   }
+  // Pre-sort by date descending ONCE at generation time
+  records.sort((a, b) => b.date.localeCompare(a.date));
   _cachedRecords = records;
   return records;
 }

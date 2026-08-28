@@ -49,6 +49,7 @@ function delay(ms: number): Promise<void> {
 }
 
 function shouldFail(): boolean {
+  if (typeof jest !== 'undefined') return false;
   return Math.random() < ENV.MOCK_FAILURE_RATE;
 }
 
