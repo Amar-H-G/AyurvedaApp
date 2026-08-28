@@ -1,34 +1,43 @@
-# Amrutam Senior React Native Assignment
-## Ayurveda Super App — Production-Ready Implementation
+# Amrutam Ayurvedic Super App
+## Senior React Native Mobile Application
 
 ---
 
 ## 1. Project Overview
 
-A production-oriented Ayurvedic Super App with three independent modules:
+The Amrutam Ayurvedic Super App is a modular, offline-first mobile application built with React Native. It combines three core health and wellness domains into a single unified platform:
 
-| Module | Scale | Key Features |
-|--------|-------|--------------|
-| **Consultations** | 5,000 doctors | Booking, slots, conflict detection, offline queue |
-| **Shop** | 20,000 products | Infinite scroll, cart, wishlist, multi-filter, checkout |
-| **Health Records** | 10,000 records | Timeline, grouped by month/year, attachments, tags |
+| Module | Scale | Core Features |
+|--------|-------|---------------|
+| **Consultations** | 5,000 doctors | Doctor discovery, debounced search, specialty filtering, detailed profile, slot selection, booking flow, slot conflict detection, upcoming appointments, and cancellation |
+| **Shop** | 20,000 products | 2-column grid layout, infinite scroll pagination, debounced search, multi-filter (category, price, stock), 5-way sorting, cart management, wishlist, and checkout summary |
+| **Health Records** | 10,000 records | Timeline view grouped by month and year, record type chips, search, tag filtering, and attachment previews |
 
 ---
 
 ## 2. Quick Start
 
+### Prerequisites
+- Node.js >= 18
+- React Native CLI configured for Android/iOS development environment
+
+### Installation & Setup
+
 ```bash
-# Install dependencies
+# 1. Install dependencies
 npm install --legacy-peer-deps
 
-# Run on Android
-npx react-native run-android
+# 2. Run TypeScript compilation check
+npx tsc --noEmit
 
-# Run tests
+# 3. Run Jest test suite
 npx jest --forceExit --no-coverage
 
-# TypeScript check
-npx tsc --noEmit
+# 4. Start Metro bundler
+npm start
+
+# 5. Run on Android emulator / device
+npx react-native run-android
 ```
 
 ---
@@ -37,14 +46,14 @@ npx tsc --noEmit
 
 | Technology | Choice | Rationale |
 |-----------|--------|-----------|
-| **React Native 0.74** | Core framework | Assignment requirement |
-| **TypeScript 5** | Language | Assignment requirement; full type safety |
-| **React Navigation 6** | Navigation | Assignment requirement; stack + tab navigator |
-| **Zustand 4** | State management | See decision below |
-| **AsyncStorage** | Local persistence | Cart, bookings, cache, offline queue |
-| **NetInfo** | Network detection | Offline detection → sync trigger |
-| **date-fns 3** | Date utilities | Lightweight, tree-shakeable |
-| **Jest 29** | Testing | React Native preset |
+| **React Native 0.74** | Core Framework | Mobile platform baseline with New Architecture compatibility |
+| **TypeScript 5** | Language | Full strict type safety (`strict: true`), zero `any` types across domain models and UI |
+| **React Navigation 6** | Navigation | Tab navigator for root modules with nested Native Stack navigators and deep linking support |
+| **Zustand 4** | State Management | Selector-based, lightweight global state stores for UI theme, cart, and bookings |
+| **AsyncStorage** | Storage | Persistent storage for shopping cart, user bookings, feature flags, and offline queue |
+| **NetInfo** | Network Status | Network connectivity monitoring for automatic offline detection and sync triggers |
+| **date-fns 3** | Date Formatting | Modular date manipulation and formatting utilities |
+| **Jest 29** | Testing Framework | Unit and integration test runner configured with React Native preset |
 
 ---
 
@@ -53,291 +62,211 @@ npx tsc --noEmit
 ```
 AyurvedaApp/
 ├── src/
-│   ├── config/           # ENV constants, API config
-│   ├── types/            # All TypeScript interfaces (single source)
-│   ├── constants/        # Storage keys, labels, magic values
-│   ├── theme/
-│   │   ├── tokens.ts     # Design tokens (colour, spacing, typography)
-│   │   └── themes.ts     # Light + dark theme objects
+│   ├── config/           # Environment variables, timeout thresholds, pagination constants
+│   ├── types/            # Centralized TypeScript definitions and domain models
+│   ├── constants/        # Storage keys, filter options, specialty options
+│   ├── theme/            # Design system tokens (colors, typography, spacing) & theme objects
 │   ├── services/
-│   │   ├── api/          # Repository layer (mockApiClient, consultationApi, shopApi, healthRecordsApi)
-│   │   ├── storage/      # Typed AsyncStorage wrapper
-│   │   ├── offline/      # Offline queue with retry logic
-│   │   ├── logger/       # Centralised logger + crash-reporting abstraction
-│   │   └── featureFlags/ # Feature flag service (Bonus #1)
+│   │   ├── api/          # Repository API layer & Mock Network Client with failure simulation
+│   │   ├── storage/      # Typed AsyncStorage abstraction
+│   │   ├── offline/      # Offline operation queue with retry logic
+│   │   ├── logger/       # Level-filtered logging service & crash reporting abstraction
+│   │   └── featureFlags/ # Feature flag management service
 │   ├── store/
-│   │   ├── app/          # Theme, toast, network, feature flags
-│   │   ├── consultations/# Bookings, offline ops, conflict detection
-│   │   └── shop/         # Cart, wishlist, persistence
-│   ├── hooks/            # useTheme, useDebounce, useNetworkSync
+│   │   ├── app/          # Global UI state (theme, toasts, network status, feature flags)
+│   │   ├── consultations/# Booking state, upcoming appointments, slot conflict detection
+│   │   └── shop/         # Cart items, quantity mutations, wishlist IDs
+│   ├── hooks/            # Shared hooks (useTheme, useDebounce, useNetworkSync)
 │   ├── data/
-│   │   └── generators/   # Deterministic data: doctors, products, records
+│   │   └── generators/   # Deterministic mock generators (5k doctors, 20k products, 10k records)
 │   ├── components/
-│   │   ├── design-system/# Typography, Button, Card, SearchBar, Chip, StateViews
-│   │   └── shared/       # ErrorBoundary, ToastContainer
+│   │   ├── design-system/# Reusable UI tokens (Typography, Button, Card, SearchBar, Chip, StateViews)
+│   │   └── shared/       # ErrorBoundary & ToastContainer
 │   ├── modules/
-│   │   ├── consultations/ # hooks/, components/, screens/
-│   │   ├── shop/          # hooks/, components/, screens/
-│   │   └── healthRecords/ # hooks/, components/, screens/
-│   └── navigation/       # RootNavigator (tabs + stacks + deep links)
+│   │   ├── consultations/ # Module screens, hooks (useDoctors, useBooking), and DoctorCard
+│   │   ├── shop/          # Module screens, hooks (useProducts), and ProductCard
+│   │   └── healthRecords/ # Module screens and hooks (useHealthRecords)
+│   └── navigation/       # RootNavigator (Tab bar + Stack navigators + Deep link mappings)
 ├── __tests__/
-│   ├── unit/             # businessLogic.test.ts, utils.test.ts
-│   └── e2e/              # consultationFlow.test.ts
-└── __mocks__/            # AsyncStorage, NetInfo mocks
+│   ├── unit/             # Business logic tests (generators, cart math, conflict detection, utils)
+│   └── e2e/              # Logic-level E2E tests for module user journeys
+└── __mocks__/            # Jest mocks for AsyncStorage and NetInfo
 ```
 
 ---
 
-## 5. Architecture
+## 5. Architecture & Layered Design
 
-### Layered Separation
+The application enforces strict separation of concerns across a 4-tier layer structure:
 
 ```
-UI (Screens)
-    ↓
-Module Hooks (useDoctors, useProducts, useHealthRecords, useBooking)
-    ↓
-API Repository Layer (consultationApi, shopApi, healthRecordsApi)
-    ↓
-Mock API Client (latency simulation, failure injection)
-    ↓
-Deterministic Data Generators (doctorGenerator, productGenerator, recordGenerator)
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                       │
+│      React Native Screens & Design System Components        │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│                    Domain Hook Layer                        │
+│   useDoctors, useBooking, useProducts, useHealthRecords      │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│                  Repository API Layer                       │
+│    consultationApi, shopApi, healthRecordsApi               │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│             Mock Client & Infrastructure                    │
+│   mockApiClient (Latency/Jitter) & Generator Singletons      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Replacing the mock backend** with a real API requires only changing the API repository layer — all hooks and UI are decoupled.
-
-### Key Decisions
-
-- **No God Components**: Each screen delegates to a focused hook; screens are pure UI.
-- **No barrel imports**: Each module explicitly imports from its own layer.
-- **Memo everywhere that matters**: FlatList items, card components, tab bar icons.
+### Architectural Principles
+- **Clean Component Boundaries**: Screens delegate state management, side-effects, and data fetching to custom domain hooks. Screens focus exclusively on layout and user interaction.
+- **Backend Decoupling**: API repository classes (`consultationApi`, `shopApi`, `healthRecordsApi`) isolate the presentation layer from backend implementation details. Swapping the mock layer for production REST/GraphQL endpoints requires zero UI changes.
+- **Explicit Imports**: Modules import cleanly from dedicated domain directories without circular dependencies.
 
 ---
 
-## 6. State Management Decision
+## 6. State Management Architecture
 
-**Chosen: Zustand** over Redux Toolkit / React Context / MobX.
+State is partitioned according to scope and persistence requirements:
 
-| Concern | Solution |
-|---------|----------|
-| Server/UI data | Module hooks (local useState) |
-| App-global UI | `useAppStore` (theme, toasts, network, flags) |
-| Bookings | `useConsultationStore` (persisted to AsyncStorage) |
-| Cart + Wishlist | `useShopStore` (persisted to AsyncStorage) |
-| Offline queue | `offlineQueue` service (persisted to AsyncStorage) |
-| Health records | Local hook state (no global store needed) |
+| State Scope | Technology | Purpose | Persistence |
+|-------------|------------|---------|-------------|
+| **Global UI** | Zustand (`appStore`) | Theme mode (Light/Dark), toast alerts, network connection state, feature flags | Theme and feature flags stored to AsyncStorage |
+| **Consultation State** | Zustand (`consultationStore`) | Active bookings, pending appointments, slot conflict checking | Persisted to AsyncStorage |
+| **Cart & Wishlist** | Zustand (`shopStore`) | Cart items, quantity updates, total calculation, wishlist item IDs | Persisted to AsyncStorage |
+| **Offline Operation Queue** | `offlineQueue` Service | Queued booking and mutation requests generated while offline | Persisted to AsyncStorage |
+| **Server/Screen State** | React `useState` / `useReducer` inside custom hooks | Search queries, selected filter values, active page numbers, loading/error states | Transient (reset on unmount) |
 
-**Why Zustand over Redux:** Zero boilerplate, built-in selectors prevent unnecessary re-renders, tiny bundle, easy async actions. Each store is independent — no single global slice.
-
-**Why not Context:** Context re-renders all consumers on every change. Unsuitable for high-frequency state (cart item count, toasts).
+### Why Zustand?
+- **Selector Optimization**: Components re-render only when their specific slice of state changes (e.g., subscribing strictly to `cartItemCount`).
+- **Framework Agnostic Access**: Zustand stores can be inspected and mutated directly outside React component render trees (e.g., inside offline sync handlers).
+- **Minimal Overhead**: Eliminates Redux boilerplate actions and reducer hierarchy while avoiding React Context re-render cascades.
 
 ---
 
 ## 7. Performance Strategy
 
-### Large Dataset Handling
+To handle high-volume datasets (5,000 doctors, 20,000 products, and 10,000 health records), the application implements the following techniques:
 
-| Dataset | Strategy |
-|---------|----------|
-| 5,000 doctors | Paginated (20/page), `FlatList` with `getItemLayout`, `removeClippedSubviews`, `maxToRenderPerBatch=10` |
-| 20,000 products | Paginated (20/page), 2-column `FlatList`, `windowSize=10`, `initialNumToRender=6` |
-| 10,000 records | Grouped, `SectionList`, sticky section headers, `maxToRenderPerBatch=10` |
+### Virtualization & List Optimization
+- **Doctor List (5,000 items)**: Single-column `FlatList` utilizing `getItemLayout` with a fixed item height (148px) to bypass dynamic measurement passes. Configured with `removeClippedSubviews`, `maxToRenderPerBatch={10}`, `windowSize={10}`, and `initialNumToRender={8}`.
+- **Product Grid (20,000 items)**: 2-column `FlatList` (`numColumns={2}`) with initial batching (`initialNumToRender={6}`), windowing (`windowSize={10}`), and on-demand pagination (20 items per page).
+- **Health Records Timeline (10,000 items)**: `SectionList` grouped by Month/Year with sticky headers, item virtualization, and clipping enabled.
 
-### Component-Level
-
-- `React.memo` on all list items (`DoctorCard`, `ProductCard`, `RecordCard`, `BookingCard`)
-- `useCallback` for all event handlers passed as props
-- `useMemo` for derived data (slot grouping, filter panels, section headers)
-- `useDebounce(300ms)` on all search inputs — prevents per-keystroke API calls
-- `getItemLayout` on doctor list — enables O(1) scroll position calculation
-- `loadingRef` guard in hooks — prevents concurrent page fetches
-
-### Data Generation
-
-- All 5k/20k/10k datasets generated **once** (module-level singleton cache)
-- Deterministic: same index always produces same data — no randomness overhead
-- Filtering/sorting operates on in-memory arrays — sub-millisecond for 20k products
+### Component Memoization & Rendering Efficiency
+- **Pure Component Rendering**: `React.memo` wraps list item components (`DoctorCard`, `ProductCard`, `RecordCard`, `Chip`, `Typography`, `Button`).
+- **Stable References**: `useCallback` wraps all list item event handlers (`onPress`, `onAddToCart`, `onToggleWishlist`) to prevent callback reference changes across renders.
+- **Search Debouncing**: `useDebounce` delays search query updates by 300ms before executing search filtering routines, preventing execution on every keystroke.
+- **Singleton Generators**: Data generation algorithms run once per session and cache results in memory via singleton instances.
 
 ---
 
-## 8. Offline-First Strategy
+## 8. Offline-First Architecture
 
-### Architecture
+### Offline Cache & Fallback
+1. **Network Monitoring**: `useNetworkSync` listens to real-time network connectivity transitions using NetInfo.
+2. **Read Caching**: Initial pages fetched while online are automatically stored in AsyncStorage. When offline, API repositories detect the network status and return cached data along with an offline indicator banner.
 
-```
-Network Available → API call → cache first page to AsyncStorage
-Network Unavailable → read from AsyncStorage cache
-```
-
-### Offline Cart
-Cart is **always** written to AsyncStorage on every mutation (`addToCart`, `updateQuantity`, `removeFromCart`). The cart works 100% offline.
-
-### Offline Booking Queue
-
-1. Booking attempted while offline → `offlineQueue.enqueue()` stores op to AsyncStorage
-2. Local booking created with `status: 'queued'`
-3. Upcoming screen shows "Queued (Offline)" badge
-4. On network reconnect (`useNetworkSync`) → `offlineQueue.processQueue()` fires
-5. Each op retried up to `SYNC_RETRY_MAX=3` times
-6. Success: op dequeued; Failure: kept with error, retry count incremented
-7. Toast shown with sync result
-
-### Automatic Sync
-
-`useNetworkSync` subscribes to NetInfo. Detects offline→online transition. Prevents duplicate sync via `wasOfflineRef`. Shows toast with result count.
+### Offline Storage & Queue System
+1. **Cart Operations**: Cart additions, quantity updates, and item removals are immediately stored in AsyncStorage. The shopping cart remains fully functional offline.
+2. **Offline Booking Queue**:
+   - Booking attempts made while offline are saved to an offline queue in AsyncStorage and marked as `status: 'queued'`.
+   - The UI immediately displays the appointment in the "Upcoming Consultations" screen with a "Queued (Offline)" badge.
+   - Upon network restoration, `useNetworkSync` detects connectivity and invokes `offlineQueue.processQueue()`.
+   - Each operation is retried with an exponential backoff policy (up to `SYNC_RETRY_MAX=3`).
+   - Successful operations are dequeued, and a synchronization toast notification informs the user.
 
 ---
 
-## 9. Reliability
+## 9. Failure Handling & Resilience
 
-All API calls flow through `mockApiClient.mockRequest()` which simulates:
+Network and API failures are simulated via `mockApiClient.ts`:
 
-| Scenario | Behaviour |
-|----------|-----------|
-| `normal` | 800ms + 0–400ms jitter |
-| `slow` | 3–5 second latency |
-| `timeout` | Returns error after API_TIMEOUT_MS |
-| `failure` | Returns 500 error |
-| `empty` | Returns empty array |
-| `partial` | Returns first 50% of data |
-
-Plus a configurable 5% random failure rate on top of the scenario.
-
-UI always shows: loading state → success/error/empty state → retry button.
+| Simulated Condition | Client Engine Behavior | Presentation Layer Handling |
+|---------------------|------------------------|-----------------------------|
+| **Normal Latency** | 800ms base delay + 0–400ms jitter | Standard `LoadingState` activity indicator |
+| **Slow Network** | 3–5 second artificial delay | Extended loading indicator with user feedback |
+| **API Timeout** | Aborts request after 10,000ms threshold | Displays `ErrorState` with retry button |
+| **Random 500 Failure** | 5% probabilistic failure injection | Shows error toast banner + retry button |
+| **Empty Response** | Returns zero items | Displays `EmptyState` component with action callout |
+| **Partial Response** | Returns first 50% of page data | Displays available items with pagination retry |
+| **Uncaught Exception** | React component render crash | Captured by `ErrorBoundary` with fallback crash screen |
 
 ---
 
-## 10. Bonus Features Selected
+## 10. Selected Bonus Features
 
-### Bonus 1 — Feature Flags
-**Why:** A health app must be able to disable features instantly without a release. Flags control deep linking, localization, biometric auth, background sync. In production: backed by Firebase Remote Config.
+### 1. Feature Flags Service (`src/services/featureFlags/`)
+- **Purpose**: Simulates a remote configuration service (similar to Firebase Remote Config or LaunchDarkly) with local persistence and periodic refresh.
+- **Value**: Allows toggling experimental features, deep links, or specific flows dynamically without requiring a binary app store update.
 
-### Bonus 2 — Deep Linking
-**Why:** Direct links to doctor profiles (`ayurveda://doctors/doc_00001`) or products are critical for push notification actions and marketing campaigns. Implemented via React Navigation's `linking` config.
+### 2. Deep Linking Configuration (`src/navigation/RootNavigator.tsx`)
+- **Purpose**: Configures React Navigation linking specs for URL schemes (`ayurveda://`) and universal web links (`https://ayurvedaapp.in`).
+- **Value**: Enables direct navigation to specific doctor profiles (`ayurveda://doctors/doc_00001`) or shop products (`ayurveda://shop/prod_000001`) from push notifications and external links.
 
-### Bonus 3 — Crash Reporting Abstraction
-**Why:** `Logger.captureException()` is the single integration point. In production, one line change connects it to Sentry or Crashlytics — no scattered SDK calls across the codebase.
+### 3. Centralized Crash Reporting Abstraction (`src/services/logger/`)
+- **Purpose**: Provides a unified `Logger.captureException` entry point that routes errors through level filtering.
+- **Value**: Prepares the application for Sentry or Crashlytics integration by isolating error logging to a single service call rather than scattering SDK invocations across screens.
 
 ---
 
-## 11. Testing
+## 11. Testing & Quality Assurance
 
-### Test Results: 49/49 PASS ✅
+### Testing Infrastructure
+- **Framework**: Jest with `@testing-library/react-native` and custom AsyncStorage/NetInfo mocks.
+- **Execution**: Run `npx jest --forceExit --no-coverage` from the project root.
+
+### Verified Test Results (49 Passed)
+The complete test suite has been executed and verified:
 
 ```
-Test Suites: 3 passed
-Tests:       49 passed
-Time:        ~1.5s
+PASS __tests__/unit/businessLogic.test.ts
+PASS __tests__/unit/utils.test.ts
+PASS __tests__/e2e/consultationFlow.test.ts
+
+Test Suites: 3 passed, 3 total
+Tests:       49 passed, 49 total
+Snapshots:   0 total
+Time:        1.771 s
 ```
 
-| Test File | Coverage |
-|-----------|----------|
-| `unit/businessLogic.test.ts` | Data generators, cart math, conflict detection, filtering/sorting |
-| `unit/utils.test.ts` | Date grouping, debounce, offline queue logic, pagination |
-| `e2e/consultationFlow.test.ts` | Full booking flow, shop flow, health records — all 3 modules |
+### Coverage Breakdown
+1. **`businessLogic.test.ts` (24 tests)**: Tests dataset generator output validity, cart pricing math, slot conflict detection algorithms, and multi-filter/sorting functions.
+2. **`utils.test.ts` (11 tests)**: Tests health record month/year grouping algorithms, search debounce timers, offline queue retry rules, and pagination helpers.
+3. **`consultationFlow.test.ts` (14 tests)**: End-to-end logic test covering the full consultation booking journey, product listing/cart flow, and health record timeline filtering across large datasets.
 
 ---
 
 ## 12. Environment Configuration
 
-All configuration lives in `src/config/env.ts`. In production, use `react-native-config` to inject values from `.env` files per environment. No secrets in source code.
+Application environment variables and runtime thresholds are managed in `src/config/env.ts`:
+
+- **API Settings**: Base URLs, network timeouts (10,000ms), and failure rates.
+- **Debounce & Pagination**: Search debounce delay (300ms) and default page sizes (20 items).
+- **Offline Sync**: Maximum retry attempts (3) and retry delays (2,000ms).
+
+In a production deployment, these values would be populated via `react-native-config` using environment `.env` files per stage (Development, Staging, Production).
 
 ---
 
-## 13. Trade-offs
+## 13. Engineering Trade-offs
 
-| Decision | Trade-off |
-|----------|-----------|
-| Zustand over Redux | Less ecosystem tooling (DevTools less mature), but far less boilerplate |
-| In-memory mock API | No real network testing; replaced by `MockScenario` simulation |
-| `react-native-vector-icons` replaced with emoji | Simpler setup, no native linking needed for assignment |
-| Logic-level E2E tests | No Detox UI automation (requires physical device/emulator in CI) |
-| In-memory product sort | Sorts entire filtered set; for 20k+ with complex sorts, server-side would be better |
-
----
-
-## 14. Future Improvements
-
-- [ ] Real backend integration (replace mock API client only)
-- [ ] Detox / Maestro UI E2E tests
-- [ ] `react-native-mmkv` for faster storage
-- [ ] React Query / TanStack Query for server state caching
-- [ ] Optimistic updates for cart and bookings
-- [ ] Image caching via `react-native-fast-image`
-- [ ] Biometric authentication (LocalAuthentication)
-- [ ] Multi-language (i18n) with `react-i18next`
-- [ ] Performance monitoring (React Native Performance API + Flipper)
+| Engineering Decision | Advantage | Trade-off |
+|----------------------|-----------|-----------|
+| **Zustand over Redux Toolkit** | Eliminates boilerplate; lightweight footprint; fast selector performance | Less standardized devtools compared to Redux DevTools |
+| **In-Memory Mock API** | Enables fast, self-contained development without external server dependencies | Does not simulate actual HTTP network stack overhead or socket states |
+| **System Emojis over Native Vectors** | Zero native icon library linking overhead; reliable cross-platform rendering | Less visual customizability than custom SVG icon sets |
+| **Logic-Level E2E Tests** | Extremely fast execution speed (~1.7s); zero emulator dependencies in CI | Does not automate actual touch events on native UI layers (requires Detox/Maestro for UI E2E) |
 
 ---
 
-## 15. Requirement Verification
+## 14. Future Production Enhancements
 
-| PDF Requirement | Implementation | Status |
-|----------------|---------------|--------|
-| Doctor listing | `DoctorListScreen` + `useDoctors` | ✅ Done |
-| Doctor search | Debounced search in `useDoctors` | ✅ Done |
-| Doctor filters | Specialty, fee, rating, availability | ✅ Done |
-| Doctor details | `DoctorDetailScreen` | ✅ Done |
-| Available slots | `generateSlotsForDoctor` → slot grid | ✅ Done |
-| Booking flow | `useBooking` → `consultationApi.createBooking` | ✅ Done |
-| Upcoming consultations | `UpcomingConsultationsScreen` | ✅ Done |
-| Cancel booking | `useBooking.cancel` + confirmation dialog | ✅ Done |
-| Slot conflicts | `hasConflict()` in `consultationStore` | ✅ Done |
-| Expired slots | `isExpired` flag, disabled in UI | ✅ Done |
-| Double booking | Prevented by `hasConflict` pre-check | ✅ Done |
-| Product listing | `ProductListScreen` + `useProducts` | ✅ Done |
-| Infinite scroll | `onEndReached` + `loadMore` pagination | ✅ Done |
-| Product search | Debounced, filter through 20k products | ✅ Done |
-| Multi-filter | Category, price, rating, in-stock | ✅ Done |
-| Sorting | 5 sort options via `ProductFilters.sortBy` | ✅ Done |
-| Product details | Screen + `shopApi.getProductById` | ✅ Done |
-| Cart | `shopStore` with persist | ✅ Done |
-| Quantity updates | `updateQuantity` with remove-on-zero | ✅ Done |
-| Wishlist | `toggleWishlist` + `isInWishlist` | ✅ Done |
-| Checkout summary | `CartScreen` order summary + `shopApi.checkoutCart` | ✅ Done |
-| Cart persistence | AsyncStorage via `shopStore.loadFromStorage` | ✅ Done |
-| Timeline view | `SectionList` grouped by month/year | ✅ Done |
-| Record filters | Type filter chips | ✅ Done |
-| Record search | Debounced search on title/description/tags | ✅ Done |
-| Record tags | Chip display per record | ✅ Done |
-| Attachment preview | Image thumbnail + PDF open via Linking | ✅ Done |
-| Group by month/year | `groupRecordsByMonth` + sticky headers | ✅ Done |
-| React Native | RN 0.74.7 | ✅ Done |
-| TypeScript | Full strict typing, no `any` | ✅ Done |
-| React Navigation | v6, stack + tabs + deep links | ✅ Done |
-| No boilerplate | Initialized from scratch, architecture designed here | ✅ Done |
-| 5,000 doctors | Generated + paginated, tested in E2E | ✅ Done |
-| 20,000 products | Generated + paginated, tested in E2E | ✅ Done |
-| 10,000 records | Generated + SectionList, tested in E2E | ✅ Done |
-| Virtualization | FlatList + SectionList with all perf props | ✅ Done |
-| Memoization | `React.memo` on all list items and headers | ✅ Done |
-| Lazy loading | Pagination + `onEndReached` | ✅ Done |
-| Cached API responses | First page cached to AsyncStorage | ✅ Done |
-| Offline cart | Always persisted, works offline | ✅ Done |
-| Offline booking queue | `offlineQueue` service | ✅ Done |
-| Automatic sync | `useNetworkSync` on reconnect | ✅ Done |
-| Slow network | `MockScenario.slow` (3–5s) | ✅ Done |
-| API timeout | `MockScenario.timeout` | ✅ Done |
-| Random failures | 5% MOCK_FAILURE_RATE | ✅ Done |
-| Empty responses | `MockScenario.empty` | ✅ Done |
-| Partial responses | `MockScenario.partial` | ✅ Done |
-| Error boundary | `ErrorBoundary` class component | ✅ Done |
-| Clean architecture | Layered: UI → Hooks → API → Data | ✅ Done |
-| Modular code | 3 independent modules with own hooks/components/screens | ✅ Done |
-| Reusable components | Design system: Typography, Button, Card, Chip, SearchBar, StateViews | ✅ Done |
-| Strong typing | All types in `src/types/index.ts` | ✅ Done |
-| Env config | `src/config/env.ts` | ✅ Done |
-| API abstraction | Repository layer isolates mock from UI | ✅ Done |
-| Logging | `Logger` service with levels + crash abstraction | ✅ Done |
-| Global toast | `useAppStore.showToast` + `ToastContainer` | ✅ Done |
-| Theme support | `lightTheme` + `darkTheme` | ✅ Done |
-| Dark mode | Toggle via header button, persisted | ✅ Done |
-| Accessibility | `accessibilityLabel`, `accessibilityRole`, `accessibilityState` throughout | ✅ Done |
-| Business logic tests | 24 tests in `businessLogic.test.ts` | ✅ Done |
-| Custom hook tests | Debounce, queue logic in `utils.test.ts` | ✅ Done |
-| Utility tests | Pagination, grouping, date in `utils.test.ts` | ✅ Done |
-| E2E flow test | Full booking + shop + records in `consultationFlow.test.ts` | ✅ Done |
-| Feature Flags (Bonus) | `featureFlagsService` with remote refresh | ✅ Done |
-| Deep Linking (Bonus) | Navigation `linking` config | ✅ Done |
-| Crash Reporting (Bonus) | `Logger.captureException` abstraction | ✅ Done |
-| README | This document | ✅ Done |
+- [ ] **Native UI E2E Automation**: Integrate Detox or Maestro for end-to-end UI interaction testing.
+- [ ] **High-Performance Storage Engine**: Migrate from AsyncStorage to `react-native-mmkv` for faster synchronous key-value storage.
+- [ ] **Server State Management**: Introduce TanStack Query (React Query) for automated background revalidation and cache management.
+- [ ] **Advanced Image Caching**: Implement `react-native-fast-image` for disk caching of doctor avatars and product images.
+- [ ] **Internationalization (i18n)**: Add multi-language translation support via `react-i18next`.
